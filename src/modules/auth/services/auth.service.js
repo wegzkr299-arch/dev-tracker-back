@@ -32,7 +32,7 @@ const registerdev = async (name, email, password) => {
       <p>If you didn't request this, ignore this email.</p>
     `;
 
-    await sendMail(email, "Password Reset Code", html);
+    await sendMail(email, "verify Email Code", html);
     console.log(hashOtp);
     console.log(expiresInMin);
 

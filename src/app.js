@@ -7,6 +7,7 @@ const regRouter = require("./modules/auth/routes/auth.routes");
 const errorMiddleware = require("./middlewares/error.middleware");
 const app = express();
 const port = 4200;
+app.set('trust proxy', 1)
 app.use(
   helmet({
     contentSecurityPolicy: {
