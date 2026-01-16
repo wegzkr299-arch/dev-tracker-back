@@ -1,38 +1,39 @@
 require("dotenv").config();
 const SibApiV3Sdk = require('sib-api-v3-sdk');
 
-const client = SibApiV3Sdk.ApiClient.instance;
+console.log("1. الكود بدأ يحمل ملف الـ sendMail");
 
-// تأكد إن المفتاح بيتم تعيينه صح
+const client = SibApiV3Sdk.ApiClient.instance;
 const apiKey = client.authentications['api-key'];
-apiKey.apiKey = process.env.BREVO_API_KEY; // إنت مسميه SMTP_PASS في الملف بتاعك
+apiKey.apiKey = process.env.SMTP_PASS;
+
+console.log("2. الـ API Key اللي اتقرأ هو:", process.env.SMTP_PASS ? "موجود ومقروء" : "فارغ أو undefined ❌");
 
 const sendMail = async (to, subject, html) => {
-  const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-  
-  let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail(); 
+    console.log(`3. محاولة إرسال إيميل إلى: ${to}`);
+    
+    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail(); 
 
-  sendSmtpEmail = {
-    to: [{ email: to }],
-    sender: { email: process.env.BREVO_API_KEY }, // الإيميل المسجل في بريفو
-    subject: subject,
-    htmlContent: html
-  };
+    sendSmtpEmail.to = [{ email: to }];
+    sendSmtpEmail.sender = { email: process.env.SMTP_USER }; 
+    sendSmtpEmail.subject = subject;
+    sendSmtpEmail.htmlContent = html;
 
-  try {
-    const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
-    console.log("✅ تم الإرسال بنجاح:", data.messageId);
-    return data;
-  } catch (err) {
-    console.error("❌ فشل الإرسال:");
-    if (err.response) {
-      // ده هيقولك بالظبط ليه السيرفر رفض الطلب
-      console.error("السبب من السيرفر:", err.response.body);
-    } else {
-      console.error("خطأ غير متوقع:", err.message);
+    try {
+        console.log("4. جاري إرسال الطلب لـ Brevo...");
+        const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
+        console.log("5. ✅ استجابة السيرفر:", data);
+        return data;
+    } catch (err) {
+        console.error("6. ❌ حصل خطأ أثناء الإرسال:");
+        if (err.response) {
+            console.error("تفاصيل الخطأ من Brevo:", JSON.stringify(err.response.body, null, 2));
+        } else {
+            console.error("الخطأ:", err.message);
+        }
+        throw err;
     }
-    throw err;
-  }
 }
 
 module.exports = sendMail;
