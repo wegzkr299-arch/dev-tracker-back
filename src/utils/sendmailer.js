@@ -5,25 +5,29 @@ console.log("1. الكود بدأ يحمل ملف الـ sendMail");
 
 const client = SibApiV3Sdk.ApiClient.instance;
 const apiKey = client.authentications['api-key'];
-apiKey.apiKey = process.env.SMTP_PASS;
 
-console.log("2. الـ API Key اللي اتقرأ هو:", process.env.SMTP_PASS ? "موجود ومقروء" : "فارغ أو undefined ❌");
+// التعديل هنا: غيرنا SMTP_PASS لـ BREVO_API_KEY عشان يطابق ملف الـ .env الجديد
+apiKey.apiKey = process.env.BREVO_API_KEY;
+
+console.log("2. الـ API Key اللي اتقرأ هو:", process.env.BREVO_API_KEY ? "موجود ومقروء ✅" : "فارغ أو undefined ❌");
 
 const sendMail = async (to, subject, html) => {
     console.log(`3. محاولة إرسال إيميل إلى: ${to}`);
     
     const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail(); 
-
-    sendSmtpEmail.to = [{ email: to }];
-    sendSmtpEmail.sender = { email: process.env.SMTP_USER }; 
-    sendSmtpEmail.subject = subject;
-    sendSmtpEmail.htmlContent = html;
+    
+    // تأكد إن البيانات مطابقة للي بريفو مستنياه
+    const sendSmtpEmail = {
+        to: [{ email: to }],
+        sender: { email: process.env.SMTP_USER }, // aliabueldahab2005@gmail.com
+        subject: subject,
+        htmlContent: html
+    };
 
     try {
         console.log("4. جاري إرسال الطلب لـ Brevo...");
         const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
-        console.log("5. ✅ استجابة السيرفر:", data);
+        console.log("5. ✅ تم الإرسال بنجاح! استجابة السيرفر:", data);
         return data;
     } catch (err) {
         console.error("6. ❌ حصل خطأ أثناء الإرسال:");
