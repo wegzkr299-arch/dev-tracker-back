@@ -1,30 +1,38 @@
-const SibApiV3Sdk = require('sib-api-v3-sdk');
 require("dotenv").config();
-//comment
-const client = SibApiV3Sdk.ApiClient.instance;
-client.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
+const SibApiV3Sdk = require('sib-api-v3-sdk');
 
-const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+const client = SibApiV3Sdk.ApiClient.instance;
+
+// تأكد إن المفتاح بيتم تعيينه صح
+const apiKey = client.authentications['api-key'];
+apiKey.apiKey = process.env.BREVO_API_KEY; // إنت مسميه SMTP_PASS في الملف بتاعك
 
 const sendMail = async (to, subject, html) => {
-  if (!process.env.BREVO_API_KEY) {
-    throw new Error("BREVO_API_KEY is missing from environment variables.");
-  }
+  const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+  
+  let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail(); 
 
-  const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail(); 
-  sendSmtpEmail.subject = subject;
-  sendSmtpEmail.htmlContent = html;
-  sendSmtpEmail.sender = { email: process.env.FROM_EMAIL };
-  sendSmtpEmail.to = [{ email: to }];
+  sendSmtpEmail = {
+    to: [{ email: to }],
+    sender: { email: process.env.BREVO_API_KEY }, // الإيميل المسجل في بريفو
+    subject: subject,
+    htmlContent: html
+  };
 
   try {
     const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
+    console.log("✅ تم الإرسال بنجاح:", data.messageId);
     return data;
   } catch (err) {
-    // This will help you see exactly what the API didn't like
-    console.error("Brevo Error Details:", err.response?.text || err.message);
+    console.error("❌ فشل الإرسال:");
+    if (err.response) {
+      // ده هيقولك بالظبط ليه السيرفر رفض الطلب
+      console.error("السبب من السيرفر:", err.response.body);
+    } else {
+      console.error("خطأ غير متوقع:", err.message);
+    }
     throw err;
   }
-};
+}
 
-module.exports = sendMail
+module.exports = sendMail;
