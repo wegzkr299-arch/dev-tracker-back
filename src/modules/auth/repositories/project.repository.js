@@ -46,5 +46,17 @@ const getArchivedProjects = async (ownerId, page, limit) => {
     .skip(page * limit);
 };
 
+const findAllProjects = async (ownerId, page, limit) => {
 
-module.exports = { createProject, isProjectExists, completeProject, getArchivedProjects};
+
+  return await Project.find({
+    owner: ownerId,
+    isArchived: false,
+  })
+    .sort({ createdAt: -1 })
+    .limit(limit)
+    .skip(page * limit)
+}
+
+
+module.exports = { createProject, isProjectExists, completeProject, getArchivedProjects , findAllProjects};

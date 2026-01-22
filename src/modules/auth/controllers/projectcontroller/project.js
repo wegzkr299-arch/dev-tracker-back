@@ -4,6 +4,7 @@ const {
   createDevProject,
   completedDevProject,
   getDevProjectArchived,
+  getAllDevProjects,
 } = require("../../services/project.service");
 
 const createProjectDev = async (req, res, next) => {
@@ -39,7 +40,7 @@ const completedProjectDev = async (req, res, next) => {
     const deletedProject = await completedDevProject(developerId, projectId);
     res
       .status(201)
-      .json({ message: "project deleted successfully", deletedProject });
+      .json({ message: "project completed and archived successfully", deletedProject });
   } catch (error) {
     next(error);
   }
@@ -68,9 +69,33 @@ const getAllArchivedProjects = async (req, res, next) => {
   }
 };
 
+const getAllProjects = async (req, res, next) => {
+  try {
+    const developerId = req.user._id;
+    const page = Math.max(0, Number(req.query.page) || 0);
+    const limit = 10;
+
+    const Projects = await getAllDevProjects(
+      developerId,
+      page,
+      limit
+    );
+
+    res.status(200).json({
+      page,
+      limit,
+      count: Projects.length,
+      Projects,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 module.exports = {
   createProjectDev,
   completedProjectDev,
   getAllArchivedProjects,
+  getAllProjects
 };
