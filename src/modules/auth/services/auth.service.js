@@ -57,7 +57,8 @@ const registerdev = async (name, email, password) => {
 };
 
 const otpToCreatAcc = async (otp, token) => {
-  if (!otp) throw new ApiError(400, "OTP is required");
+try {
+    if (!otp) throw new ApiError(400, "OTP is required");
 
   const decoded = jwt.verify(token, process.env.JWT_SECRET);
   if (!decoded) throw new ApiError(400, "Email is required");
@@ -73,6 +74,10 @@ const otpToCreatAcc = async (otp, token) => {
   });
 
   return developer;
+} catch (error) {
+            throw new ApiError(401, "Your session has expired. Please register again.");
+        
+}
 };
 
 const logindev = async (email, password) => {
