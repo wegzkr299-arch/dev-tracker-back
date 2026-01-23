@@ -1,5 +1,5 @@
 const ApiError = require("../../../../utils/apiErrors");
-
+const jwt = require('jsonwebtoken')
 const { registerSchema } = require("../../schemas/auth.schema");
 const {registerdev, otpToCreatAcc} = require("../../services/auth.service");
 
@@ -7,12 +7,11 @@ const register = async (req, res, next) => {
   try {
     const { error } = registerSchema.validate(req.body);
     if (error) return next(new ApiError(400, error.details[0].message));
-
     const { name, email, password } = req.body;
-    const otpMessage = await registerdev(name, email, password);
-
+    const token = await registerdev(name, email, password);
     res.status(201).json({
-      otpMessage
+      otpMessage:'please check youe email , otp was sent to your email',
+      token
     });
   } catch (err) {
     next(err);
@@ -21,13 +20,14 @@ const register = async (req, res, next) => {
 
 const creatAccount = async (req , res , next) => {
   try {
-    const{otp  , email}  = req.body; 
-    const developer = await otpToCreatAcc(otp , email);
+    const{otp  , token}  = req.body; 
+    const developer = await otpToCreatAcc(otp , token);
     res.status(200).json({
-      message: 'user created',
-      _id: developer._id,
-      email: developer.email,
-      name: developer.name
+      message: "Account created",
+      id:developer._id, 
+      name:developer.name, 
+      email:developer.email, 
+      role:developer.role
     })
   } catch (error) {
     next(error)
