@@ -1,5 +1,6 @@
+const ApiError = require("../../../utils/apiErrors");
 const Project = require("../schemas/project.schema");
-
+const mongoose = require("mongoose")
 const createProject = async ({
   name,
   clientName,
@@ -47,16 +48,46 @@ const getArchivedProjects = async (ownerId, page, limit) => {
 };
 
 const findAllProjects = async (ownerId, page, limit) => {
-
-
   return await Project.find({
     owner: ownerId,
     isArchived: false,
   })
     .sort({ createdAt: -1 })
     .limit(limit)
-    .skip(page * limit)
+    .skip(page * limit);
+};
+
+const deleteOneProject = async (ownerId, projectId) => {
+  if (!mongoose.Types.ObjectId.isValid(projectId)) {
+  throw new ApiError(400, "Invalid Project ID");
 }
 
+  const project = await Project.findOneAndDelete({
+    _id: projectId,
+    owner: ownerId,
+  },
 
-module.exports = { createProject, isProjectExists, completeProject, getArchivedProjects , findAllProjects};
+  
+);
+
+  return project;
+};
+
+const getOneProject = async (projectId) => {
+    if (!mongoose.Types.ObjectId.isValid(projectId)) {
+  throw new ApiError(400, "Invalid Project ID");
+}
+
+  const project = await Project.findById(projectId)
+  return project;
+}
+
+module.exports = {
+  createProject,
+  isProjectExists,
+  completeProject,
+  getArchivedProjects,
+  findAllProjects,
+  deleteOneProject,
+  getOneProject
+};

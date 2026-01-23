@@ -5,6 +5,7 @@ const {
   completedDevProject,
   getDevProjectArchived,
   getAllDevProjects,
+  deleteDevProject,
 } = require("../../services/project.service");
 
 const createProjectDev = async (req, res, next) => {
@@ -92,10 +93,22 @@ const getAllProjects = async (req, res, next) => {
   }
 };
 
+const deleteProject = async (req , res , next) => {
+try {
+  const developerId =  req.user._id;
+  const projectId = req.params["id"];
+  await deleteDevProject(developerId , projectId);
+  res.status(203).json({message:'project deleted successfully'})
+} catch (error) {
+  next(error)
+}
+}
+
 
 module.exports = {
   createProjectDev,
   completedProjectDev,
   getAllArchivedProjects,
-  getAllProjects
+  getAllProjects,
+  deleteProject
 };
