@@ -60,7 +60,7 @@ const otpToCreatAcc = async (otp, token) => {
   if (!otp) throw new ApiError(400, "OTP is required");
 
   const decoded = jwt.verify(token, process.env.JWT_SECRET);
-  if (!decoded.email) throw new ApiError(400, "Email is required");
+  if (!decoded) throw new ApiError(400, "Email is required");
   const isMatchedOtp = await compareOtp(otp, decoded.resetOTP);
   if (!isMatchedOtp) throw new ApiError(401, "Invalid OTP");
 
