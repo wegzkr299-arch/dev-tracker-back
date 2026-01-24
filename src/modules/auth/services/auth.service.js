@@ -75,7 +75,7 @@ try {
 
   return developer;
 } catch (error) {
-            throw new ApiError(401, "Your session has expired. Please register again.");
+    throw new ApiError(401, "Your session has expired. Please register again.");
         
 }
 };

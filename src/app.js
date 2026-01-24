@@ -10,9 +10,19 @@ const app = express();
 const port = 4200;
 app.set('trust proxy', 1)
 app.use(cors({
-  origin: 'http://localhost:55676', 
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      'http://localhost:4200',
+      'http://localhost:55676'
+    ];
+
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
 }));
 app.use(
   helmet({
