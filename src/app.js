@@ -9,20 +9,25 @@ const { projectRouter } = require("./modules/auth/routes/project.routes");
 const app = express();
 const port = 4200;
 app.set('trust proxy', 1)
-app.use(cors({
-  origin: (origin, callback) => {
-    const allowedOrigins = [
-      'http://localhost:4200',
-      'http://localhost:55676',
-      'https://lively-truffle-45c6c8.netlify.app'
-    ];
+// app.use(cors({
+//   origin: (origin, callback) => {
+//     const allowedOrigins = [
+//       'http://localhost:4200',
+//       'http://localhost:55676',
+//       'https://lively-truffle-45c6c8.netlify.app'
+//     ];
 
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+//     if (!origin || allowedOrigins.includes(origin)) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error('Not allowed by CORS'));
+//     }
+//   },
+//   credentials: true
+// }));
+
+app.use(cors({
+  origin: true,
   credentials: true
 }));
 app.use(
