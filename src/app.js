@@ -13,7 +13,8 @@ app.use(cors({
   origin: (origin, callback) => {
     const allowedOrigins = [
       'http://localhost:4200',
-      'http://localhost:55676'
+      'http://localhost:55676',
+      'https://lively-truffle-45c6c8.netlify.app'
     ];
 
     if (!origin || allowedOrigins.includes(origin)) {

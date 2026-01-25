@@ -65,7 +65,7 @@ const otpToCreatAcc = async (otp, token) => {
     const isMatchedOtp = await compareOtp(otp, decoded.resetOTP);
     if (!isMatchedOtp) throw new ApiError(401, "Invalid OTP");
 
-    if (decoded.resetOTPExpires < new Date())
+    if (decoded.resetOTP < new Date())
       throw new ApiError(400, "OTP expired");
 
     const developer = await Developer.create({
