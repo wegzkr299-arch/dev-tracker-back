@@ -40,12 +40,10 @@ const completedProjectDev = async (req, res, next) => {
     const projectId = req.params["id"];
     const developerId = req.user._id;
     const deletedProject = await completedDevProject(developerId, projectId);
-    res
-      .status(201)
-      .json({
-        message: "project completed and archived successfully",
-        deletedProject,
-      });
+    res.status(201).json({
+      message: "project completed and archived successfully",
+      deletedProject,
+    });
   } catch (error) {
     next(error);
   }
@@ -57,7 +55,7 @@ const getAllArchivedProjects = async (req, res, next) => {
     const page = Math.max(0, Number(req.query.page) || 0);
     const limit = 10;
 
-    const archivedProjects = await getDevProjectArchived(
+    const { archivedProjects, totalHistory } = await getDevProjectArchived(
       developerId,
       page,
       limit,
@@ -66,7 +64,7 @@ const getAllArchivedProjects = async (req, res, next) => {
     res.status(200).json({
       page,
       limit,
-      count: archivedProjects.length,
+      totalHistory,
       archivedProjects,
     });
   } catch (error) {
@@ -83,20 +81,19 @@ const getAllProjects = async (req, res, next) => {
     const { Projects, totalActiveProjects } = await getAllDevProjects(
       developerId,
       page,
-      limit
+      limit,
     );
 
     res.status(200).json({
       page,
       limit,
-      total: totalActiveProjects,  
+      total: totalActiveProjects,
       Projects,
     });
   } catch (error) {
     next(error);
   }
 };
-
 
 const deleteProject = async (req, res, next) => {
   try {

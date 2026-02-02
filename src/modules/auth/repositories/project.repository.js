@@ -80,6 +80,13 @@ const countAllProjects = async (developerId) => {
   })
 }
 
+const countAllArchivedProjects = async (developerId) => {
+  return await Project.countDocuments({
+    owner: developerId,
+    isArchived:true
+  })
+}
+
 const getOneProject = async (projectId) => {
     if (!mongoose.Types.ObjectId.isValid(projectId)) {
   throw new ApiError(400, "Invalid Project ID");
@@ -103,5 +110,6 @@ module.exports = {
   deleteOneProject,
   getOneProject, 
   deleteProjects,
-  countAllProjects
+  countAllProjects,
+  countAllArchivedProjects
 };
