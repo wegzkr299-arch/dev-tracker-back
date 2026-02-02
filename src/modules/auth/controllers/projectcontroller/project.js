@@ -89,8 +89,7 @@ const getAllProjects = async (req, res, next) => {
     res.status(200).json({
       page,
       limit,
-      total: totalActiveProjects, 
-      count: Projects.length,   
+      total: totalActiveProjects,  
       Projects,
     });
   } catch (error) {
