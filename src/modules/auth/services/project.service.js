@@ -34,7 +34,7 @@ const getAllDevProjects = async (developerId, page, limit) => {
     throw new ApiError(404, "Developer not found");
     const projects = await findAllProjects(developerId, page, limit)
     const totalActiveProjects = await countAllProjects(developerId) 
-  return {projects , totalActiveProjects} ;
+  return {Projects , totalActiveProjects} ;
 }
 
 const deleteDevProject = async(developerId , projectId) => {
