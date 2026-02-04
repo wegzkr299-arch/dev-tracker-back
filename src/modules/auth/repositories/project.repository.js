@@ -96,6 +96,16 @@ const getOneProject = async (projectId) => {
   return project;
 }
 
+const getOneActiveProjects = async (developerId, projectId) => {
+    const project = await Project.findOne({
+    _id: projectId,
+    owner: developerId,
+    isArchived: false,
+  });
+
+  return project
+}
+
 const deleteProjects = async(ownerId) => {
   const deletedProjects = await Project.deleteMany({owner:ownerId , isArchived: true,})
   return deletedProjects;
@@ -111,5 +121,6 @@ module.exports = {
   getOneProject, 
   deleteProjects,
   countAllProjects,
-  countAllArchivedProjects
+  countAllArchivedProjects, 
+  getOneActiveProjects
 };

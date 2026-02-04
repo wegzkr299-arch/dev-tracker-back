@@ -31,4 +31,10 @@ const updateProjectSchema = joi.object({
   status: joi.string().valid("active", "paused", "completed"),
 });
 
-module.exports = { registerSchema , loginSchema , createProjectSchema , updateProjectSchema }; 
+const createTaskSchema = joi.object({
+  title: joi.string().min(3).max(255).required(),
+  estimatedHours: joi.number().min(0).optional(),
+  deadline: joi.date().greater("now")
+});
+
+module.exports = { registerSchema , loginSchema , createProjectSchema , updateProjectSchema  , createTaskSchema}; 

@@ -34,11 +34,16 @@ const taskSchema = new mongoose.Schema(
     deadline: {
       type: Date,
     },
+
+    earnedMoney: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
     versionKey: false,
-  }
+  },
 );
 
-module.exports = mongoose.model("Tasks" , taskSchema);
+module.exports = mongoose.model("Tasks", taskSchema);
