@@ -38,7 +38,7 @@ const getAllTasks = async (projectId , developerId) => {
 
     const project = await projectSchema.findOne({ 
         _id: projectId, 
-        developer: developerId 
+        owner: developerId 
     });
 
     if (!project) {
