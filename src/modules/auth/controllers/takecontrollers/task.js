@@ -79,7 +79,13 @@ const deleteAllProjectTasks = async (req, res, next) => {
     const developerId = req.user._id;
     const projectId = req.params["id"];
     const deltedTask = await deleteAllTasks(projectId , developerId)
-    if(!deltedTask) return next(new ApiError(404  , "no Tasks Found"))
+   
+    if (deltedTask.deletedCount === 0) {
+      return res.status(200).json({ 
+        message: 'No completed tasks found to delete', 
+        count: 0 
+      });
+    }
       res.status(200).json({message:'Tasks Removed successfully'})
   } catch (error) {
     next(error);

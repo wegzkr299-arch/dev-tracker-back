@@ -61,6 +61,7 @@ const deleteAllTasks = async(projectId  , developerId) => {
         throw new ApiError(403, "You don't have permission to access tasks for this project");
     }
     const deletedTask = await deleteCompletedTasks(projectId);
+    
     return deletedTask;
 }
 
