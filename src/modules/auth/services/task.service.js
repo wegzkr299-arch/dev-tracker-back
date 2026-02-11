@@ -2,6 +2,7 @@ const ApiError = require("../../../utils/apiErrors");
 const { getOneActiveProjects } = require("../repositories/project.repository");
 const { creatTaske, findTaskById, getProjectFinancials, findAllTasksByProjectId, deleteCompletedTasks } = require("../repositories/task.repository");
 const projectSchema = require("../schemas/project.schema");
+const taskActivityService = require('./taskAvtivity.service')
 
 const createTaskService = async (developerId, projectId, data) => {
   if (!developerId || !projectId)
@@ -13,13 +14,25 @@ const createTaskService = async (developerId, projectId, data) => {
   return task;
 };
 
-const completeTaskService = async (developerId, projectId, taskId) => {
-  const task = await findTaskById(taskId);
-  if(!developerId) throw new ApiError(401 , "Unathourized")
 
+const completeTaskService = async (developerId, projectId, taskId) => {
+  if (!developerId || !projectId || !taskId) 
+    throw new ApiError(401, "Unauthorized: missing developer, project or task id");
+
+  // جلب الـ task
+  const task = await findTaskById(taskId);
   if (!task || String(task.project._id) !== String(projectId) || String(task.project.owner) !== String(developerId))
     throw new ApiError(404, "Task not found or you are not allowed");
 
+  // تسجيل END activity
+  await taskActivityService.endTask({
+    developerId,
+    projectId,
+    taskId,
+    source: "STATUS_CHANGE"
+  });
+
+  // تحديث status ووقت الإنجاز وحساب الأموال
   task.status = "done";
   task.completedAt = new Date();
   task.earnedMoney = (task.spentHours || 0) * task.project.hourlyRate;
@@ -64,6 +77,8 @@ const deleteAllTasks = async(projectId  , developerId) => {
     
     return deletedTask;
 }
+
+
 
 
 module.exports = { createTaskService , completeTaskService , getProjectFinancialsService  , getAllTasks , deleteAllTasks};
