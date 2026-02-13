@@ -46,12 +46,12 @@ app.use(
 );
 app.use(express.json({ limit: "10kb" }));
 app.use(cors({ origin: ["http://localhost:4200"] }));
-app.use(
-  rateLimite({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-  })
-);
+// app.use(
+//   rateLimite({
+//     windowMs: 15 * 60 * 1000,
+//     max: 100,
+//   })
+// );
 
 const testroute = (req, res) => {
   res.json({ message: "hello form test" });
