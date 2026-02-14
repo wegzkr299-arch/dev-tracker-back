@@ -1,6 +1,6 @@
 const ApiError = require("../../../utils/apiErrors");
 const TaskActivity = require('../schemas/taskActivity.schema') 
-const TaskActivityRepo = require('../repositories/task.repository')
+const TaskActivityRepo = require('../repositories/taskActivty.repository')
 const mongoose = require("mongoose");
 // START TASK
 async function startTask({ developerId, projectId, taskId, source = "MANUAL" }) {
