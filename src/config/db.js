@@ -13,4 +13,4 @@ const dbConnection = () => {
     .catch((err) => console.log(err, "error in connection database"));
 };
 
-module.exports = dbConnection;
+module.exports = dbConnection;  

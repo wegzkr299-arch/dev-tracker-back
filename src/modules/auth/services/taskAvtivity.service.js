@@ -1,6 +1,6 @@
 const ApiError = require("../../../utils/apiErrors");
-const taskActivityRepo = require("../repositories/taskActivty.repository"); 
-
+const TaskActivity = require('../schemas/taskActivity.schema') 
+const mongoose = require("mongoose");
 // START TASK
 async function startTask({ developerId, projectId, taskId, source = "MANUAL" }) {
   if (!developerId || !projectId || !taskId)
@@ -58,7 +58,6 @@ async function getTaskStatus({ developerId, taskId }) {
     lastEnd: lastEnd?.createdAt || null
   };
 }
-
 // جلب كل الـ sessions
 async function getAllSessions({ developerId, taskId }) {
   return taskActivityRepo.findAllSessions({ developerId, taskId });
@@ -70,6 +69,43 @@ async function getAllSessionsService({ developerId, projectId, taskId }) {
 
   return taskActivityRepo.findAllSessions({ developerId, taskId })
 }
+
+const getWeeklyTotalHours = async (developerId) => {
+  const startOfWeek = new Date();
+  startOfWeek.setHours(0, 0, 0, 0);
+  startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay()); 
+
+  const stats = await TaskActivity.aggregate([
+    {
+      $match: {
+        developer: new mongoose.Types.ObjectId(developerId),
+        createdAt: { $gte: startOfWeek }
+      }
+    },
+    { $sort: { createdAt: 1 } },
+    {
+      $group: {
+        _id: "$task",
+        activities: { $push: { type: "$type", time: "$createdAt" } }
+      }
+    }
+  ]);
+
+  let totalMs = 0;
+
+  stats.forEach(task => {
+    const logs = task.activities;
+    for (let i = 0; i < logs.length - 1; i++) {
+      
+      if (logs[i].type === 'START' && logs[i+1].type === 'END') {
+        totalMs += (new Date(logs[i+1].time) - new Date(logs[i].time));
+      }
+    }
+  });
+
+  const totalHours = (totalMs / (1000 * 60 * 60)).toFixed(2);
+  return totalHours;
+};
 module.exports = {
   startTask,
   endTask,
@@ -77,5 +113,6 @@ module.exports = {
   resumeTask,
   getTaskStatus,
   getAllSessions,
-  getAllSessionsService
+  getAllSessionsService,
+  getWeeklyTotalHours
 };

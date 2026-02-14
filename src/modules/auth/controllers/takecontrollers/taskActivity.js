@@ -65,10 +65,31 @@ const getAllSessions = async (req, res, next) => {
   }
 }
 
+const getWeeklyTotalHours = async (req, res, next) => {
+  try {
+    const developerId = req.user._id;
+
+    // بنادي الـ service اللي إنت لسه كاتبها
+    const totalHours = await taskService.getWeeklyTotalHours(developerId);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalHours: parseFloat(totalHours), // عشان يرجع رقم مش String
+        unit: "hours",
+        label: "This Week"
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   startTask,
   pauseTask,
   resumeTask,
   getTaskStatus,
-  getAllSessions
+  getAllSessions,
+  getWeeklyTotalHours
 }
