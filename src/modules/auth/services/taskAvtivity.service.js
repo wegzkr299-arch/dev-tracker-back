@@ -6,7 +6,7 @@ async function startTask({ developerId, projectId, taskId, source = "MANUAL" }) 
   if (!developerId || !projectId || !taskId)
     throw new ApiError(401, "Unauthorized: missing developer, project or task id");
 
-  return taskActivityRepo.createStart({ developerId, projectId, taskId, source });
+  return TaskActivity.createStart({ developerId, projectId, taskId, source });
 }
 
 // END TASK
@@ -14,7 +14,7 @@ async function endTask({ developerId, projectId, taskId, source = "MANUAL" }) {
   if (!developerId || !projectId || !taskId)
     throw new ApiError(401, "Unauthorized: missing developer, project or task id");
 
-  return taskActivityRepo.createEnd({ developerId, projectId, taskId, source });
+  return TaskActivity.createEnd({ developerId, projectId, taskId, source });
 }
 
 // PAUSE TASK = END مؤقت
@@ -32,7 +32,7 @@ async function getTaskStatus({ developerId, taskId }) {
   const lastStart = await taskActivityRepo.findLastStart({ developerId, taskId });
   if (!lastStart) return { isWorking: false, duration: "0h 0m" };
 
-  const lastEnd = await taskActivityRepo.findLastEndAfterStart({
+  const lastEnd = await TaskActivity.findLastEndAfterStart({
     developerId,
     taskId,
     startDate: lastStart.createdAt
@@ -60,14 +60,14 @@ async function getTaskStatus({ developerId, taskId }) {
 }
 // جلب كل الـ sessions
 async function getAllSessions({ developerId, taskId }) {
-  return taskActivityRepo.findAllSessions({ developerId, taskId });
+  return TaskActivity.findAllSessions({ developerId, taskId });
 }
 
 async function getAllSessionsService({ developerId, projectId, taskId }) {
   if (!developerId || !projectId || !taskId)
     throw new ApiError(401, "Unauthorized: missing developer, project or task id")
 
-  return taskActivityRepo.findAllSessions({ developerId, taskId })
+  return TaskActivity.findAllSessions({ developerId, taskId })
 }
 
 const getWeeklyTotalHours = async (developerId) => {
