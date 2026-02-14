@@ -1,12 +1,13 @@
 const ApiError = require("../../../utils/apiErrors");
 const TaskActivity = require('../schemas/taskActivity.schema') 
+const TaskActivityRepo = require('../repositories/task.repository')
 const mongoose = require("mongoose");
 // START TASK
 async function startTask({ developerId, projectId, taskId, source = "MANUAL" }) {
   if (!developerId || !projectId || !taskId)
     throw new ApiError(401, "Unauthorized: missing developer, project or task id");
 
-  return TaskActivity.createStart({ developerId, projectId, taskId, source });
+  return TaskActivityRepo.createStart({ developerId, projectId, taskId, source });
 }
 
 // END TASK
@@ -14,7 +15,7 @@ async function endTask({ developerId, projectId, taskId, source = "MANUAL" }) {
   if (!developerId || !projectId || !taskId)
     throw new ApiError(401, "Unauthorized: missing developer, project or task id");
 
-  return TaskActivity.createEnd({ developerId, projectId, taskId, source });
+  return TaskActivityRepo.createEnd({ developerId, projectId, taskId, source });
 }
 
 // PAUSE TASK = END مؤقت
@@ -29,10 +30,10 @@ async function resumeTask({ developerId, projectId, taskId }) {
 
 // جلب حالة الـ task وحساب المدة
 async function getTaskStatus({ developerId, taskId }) {
-  const lastStart = await TaskActivity.findLastStart({ developerId, taskId });
+  const lastStart = await TaskActivityRepo.findLastStart({ developerId, taskId });
   if (!lastStart) return { isWorking: false, duration: "0h 0m" };
 
-  const lastEnd = await TaskActivity.findLastEndAfterStart({
+  const lastEnd = await TaskActivityRepo.findLastEndAfterStart({
     developerId,
     taskId,
     startDate: lastStart.createdAt
@@ -60,14 +61,14 @@ async function getTaskStatus({ developerId, taskId }) {
 }
 // جلب كل الـ sessions
 async function getAllSessions({ developerId, taskId }) {
-  return TaskActivity.findAllSessions({ developerId, taskId });
+  return TaskActivityRepo.findAllSessions({ developerId, taskId });
 }
 
 async function getAllSessionsService({ developerId, projectId, taskId }) {
   if (!developerId || !projectId || !taskId)
     throw new ApiError(401, "Unauthorized: missing developer, project or task id")
 
-  return TaskActivity.findAllSessions({ developerId, taskId })
+  return TaskActiviTaskActivityRepoty.findAllSessions({ developerId, taskId })
 }
 
 const getWeeklyTotalHours = async (developerId) => {
