@@ -29,7 +29,7 @@ async function resumeTask({ developerId, projectId, taskId }) {
 
 // جلب حالة الـ task وحساب المدة
 async function getTaskStatus({ developerId, taskId }) {
-  const lastStart = await taskActivityRepo.findLastStart({ developerId, taskId });
+  const lastStart = await TaskActivity.findLastStart({ developerId, taskId });
   if (!lastStart) return { isWorking: false, duration: "0h 0m" };
 
   const lastEnd = await TaskActivity.findLastEndAfterStart({
