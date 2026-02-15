@@ -70,10 +70,11 @@ async function getAllSessionsService({ developerId, projectId, taskId }) {
 
   return TaskActiviTaskActivityRepoty.findAllSessions({ developerId, taskId })
 }
-
 const getWeeklyTotalHours = async (developerId) => {
+  const now = new Date();
   const startOfWeek = new Date();
   startOfWeek.setHours(0, 0, 0, 0);
+  // تأكد من ضبط بداية الأسبوع حسب رغبتك (هنا تبدأ من الأحد)
   startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay()); 
 
   const stats = await TaskActivity.aggregate([
@@ -96,10 +97,21 @@ const getWeeklyTotalHours = async (developerId) => {
 
   stats.forEach(task => {
     const logs = task.activities;
-    for (let i = 0; i < logs.length - 1; i++) {
-      
-      if (logs[i].type === 'START' && logs[i+1].type === 'END') {
-        totalMs += (new Date(logs[i+1].time) - new Date(logs[i].time));
+    for (let i = 0; i < logs.length; i++) {
+      if (logs[i].type === 'START') {
+        const startTime = new Date(logs[i].time);
+        let endTime;
+
+        // لو فيه END بعد الـ START مباشرة، احسب الفرق
+        if (logs[i + 1] && logs[i + 1].type === 'END') {
+          endTime = new Date(logs[i + 1].time);
+          i++; // تخطى الـ END في اللفة القادمة
+        } else {
+          // لو مفيش END (يعني التاسك لسه شغالة)، احسب الوقت حتى "الآن"
+          endTime = new Date(); 
+        }
+        
+        totalMs += (endTime - startTime);
       }
     }
   });
