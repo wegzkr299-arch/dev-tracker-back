@@ -2,12 +2,14 @@ const ApiError = require("../../../utils/apiErrors");
 const TaskActivity = require('../schemas/taskActivity.schema') 
 const TaskActivityRepo = require('../repositories/taskActivty.repository')
 const mongoose = require("mongoose");
+const { findTaskById } = require("../repositories/task.repository");
 // START TASK
 async function startTask({ developerId, projectId, taskId, source = "MANUAL" }) {
   if (!developerId || !projectId || !taskId)
     throw new ApiError(401, "Unauthorized: missing developer, project or task id");
 
   // جوه الـ startTask service
+  const task = await findTaskById(taskId);
 if (task.status === "done") {
   throw new ApiError(400, "خلاص يا ريس التاسك دي خلصت، مينفعش تبدأ فيها تاني!");
 }
