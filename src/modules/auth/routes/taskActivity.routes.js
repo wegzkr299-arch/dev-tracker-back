@@ -1,7 +1,8 @@
 const express = require('express')
 const TaskActivity = express.Router();
 const { protect } = require('../../../middlewares/auth.middleware');
-const { startTask, pauseTask, resumeTask, getTaskStatus, getAllSessions, getWeeklyTotalHours } = require('../controllers/takecontrollers/taskActivity');
+const { startTask, pauseTask, resumeTask, getTaskStatus, getAllSessions, getWeeklyTotalHours, getWeeklyProductivity } = require('../controllers/takecontrollers/taskActivity');
+TaskActivity.get("/productivity-stats", protect, getWeeklyProductivity);
 TaskActivity.get("/my-weekly-hours", protect, getWeeklyTotalHours);
 TaskActivity.post("/projects/:projectId/tasks/:taskId/start", protect , startTask);
 TaskActivity.post("/projects/:projectId/tasks/:taskId/pause", protect , pauseTask);

@@ -1,4 +1,5 @@
 
+const ApiError = require("../../../../utils/apiErrors")
 const taskService = require("../../services/taskAvtivity.service")
 
 const startTask = async (req, res, next) => {
@@ -85,11 +86,48 @@ const getWeeklyTotalHours = async (req, res, next) => {
   }
 };
 
+
+const getWeeklyProductivity = async (req, res, next) => {
+  try {
+    // 1. استخراج الـ developerId (الأفضل يكون من الـ auth middleware لضمان الحماية)
+    const developerId = req.user?._id || req.params.developerId;
+
+    if (!developerId) {
+      return next(new ApiError(400, "Developer ID is required"));
+    }
+
+    // 2. استدعاء الـ Service (اللي فيها الـ Aggregation القوي)
+    const stats = await taskService.getWeeklyProductivityStats(developerId);
+
+    // 3. التحقق من وجود بيانات (لو مفيش شغل خالص الأسبوع ده)
+    if (!stats || stats.length === 0) {
+      return res.status(200).json({
+        status: "success",
+        message: "No activities found for the last 7 days",
+        data: [] 
+      });
+    }
+
+    // 4. الرد بنجاح
+    res.status(200).json({
+      status: "success",
+      count: stats.length,
+      data: stats
+    });
+
+  } catch (error) {
+    // 5. التعامل مع الأخطاء غير المتوقعة (مثل خطأ في الـ Database)
+    console.error("Error in getWeeklyProductivity Controller:", error);
+    next(new ApiError(500, "Internal Server Error while fetching productivity stats"));
+  }
+};
+
 module.exports = {
   startTask,
   pauseTask,
   resumeTask,
   getTaskStatus,
   getAllSessions,
-  getWeeklyTotalHours
+  getWeeklyTotalHours,
+  getWeeklyProductivity
 }

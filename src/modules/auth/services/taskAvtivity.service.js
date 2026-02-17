@@ -7,6 +7,11 @@ async function startTask({ developerId, projectId, taskId, source = "MANUAL" }) 
   if (!developerId || !projectId || !taskId)
     throw new ApiError(401, "Unauthorized: missing developer, project or task id");
 
+  // جوه الـ startTask service
+if (task.status === "done") {
+  throw new ApiError(400, "خلاص يا ريس التاسك دي خلصت، مينفعش تبدأ فيها تاني!");
+}
+
   return TaskActivityRepo.createStart({ developerId, projectId, taskId, source });
 }
 
@@ -119,6 +124,98 @@ const getWeeklyTotalHours = async (developerId) => {
   const totalHours = (totalMs / (1000 * 60 * 60)).toFixed(2);
   return totalHours;
 };
+
+const getWeeklyProductivityStats = async (developerId) => {
+  const startOfWeek = new Date();
+  startOfWeek.setHours(0, 0, 0, 0);
+  startOfWeek.setDate(startOfWeek.getDate() - 6);
+
+  return await TaskActivity.aggregate([
+    {
+      $match: {
+        developer: new mongoose.Types.ObjectId(developerId),
+        createdAt: { $gte: startOfWeek }
+      }
+    },
+    { $sort: { task: 1, createdAt: 1 } },
+    {
+      $group: {
+        _id: { 
+          task: "$task", 
+          // بنثبت اليوم هنا عشان الحسبة ما تسرحش لأيام تانية
+          day: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } } 
+        },
+        activities: { $push: { type: "$type", time: "$createdAt" } }
+      }
+    },
+    {
+      $project: {
+        day: "$_id.day",
+        totalHours: {
+          $reduce: {
+            input: { $range: [0, { $size: "$activities" }] },
+            initialValue: 0,
+            in: {
+              $let: {
+                vars: {
+                  current: { $arrayElemAt: ["$activities", "$$this"] },
+                  next: { $arrayElemAt: ["$activities", { $add: ["$$this", 1] }] }
+                },
+                in: {
+                  $cond: [
+                    { 
+                      $and: [
+                        { $eq: ["$$current.type", "START"] },
+                        { $eq: ["$$next.type", "END"] } // لازم يكون وراه END مباشرة
+                      ]
+                    },
+                    {
+                      $add: [
+                        "$$value",
+                        {
+                          $let: {
+                            vars: {
+                              // الحسبة الحقيقية بالملي ثانية
+                              diff: { $subtract: ["$$next.time", "$$current.time"] }
+                            },
+                            in: {
+                              $cond: [
+                                // لو الفرق أكبر من 24 ساعة (86400000 مللي ثانية) أو أقل من صفر
+                                { $or: [{ $gt: ["$$diff", 86400000] }, { $lt: ["$$diff", 0] }] },
+                                0, // ارمي الحسبة دي في الزبالة لأنها داتا مكسورة
+                                { $divide: ["$$diff", 3600000] } // حول لساعات
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "$$value"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      $group: {
+        _id: "$day",
+        hours: { $sum: "$totalHours" }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        date: "$_id",
+        // آخر فرملة: لو مجموع اليوم كله لسبب ما زاد عن 24 ساعة، خليه 24
+        hours: { $min: [24, { $round: ["$hours", 2] }] }
+      }
+    },
+    { $sort: { date: 1 } }
+  ]);
+};
 module.exports = {
   startTask,
   endTask,
@@ -127,5 +224,6 @@ module.exports = {
   getTaskStatus,
   getAllSessions,
   getAllSessionsService,
-  getWeeklyTotalHours
+  getWeeklyTotalHours,
+  getWeeklyProductivityStats
 };

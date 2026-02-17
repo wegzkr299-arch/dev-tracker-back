@@ -19,22 +19,29 @@ const completeTaskService = async (developerId, projectId, taskId) => {
   if (!developerId || !projectId || !taskId) 
     throw new ApiError(401, "Unauthorized: missing developer, project or task id");
 
-  // جلب الـ task
   const task = await findTaskById(taskId);
   if (!task || String(task.project._id) !== String(projectId) || String(task.project.owner) !== String(developerId))
     throw new ApiError(404, "Task not found or you are not allowed");
 
-  // تسجيل END activity
-  await taskActivityService.endTask({
-    developerId,
-    projectId,
-    taskId,
-    source: "STATUS_CHANGE"
-  });
+  // --- التعديل الجوهري هنا ---
+  // نتحقق الأول: هل التاسك دي شغالة دلوقتي؟ 
+  const status = await taskActivityService.getTaskStatus({ developerId, taskId });
+  
+  if (status.isWorking) {
+    // لو شغالة بس نقفلها
+    await taskActivityService.endTask({
+      developerId,
+      projectId,
+      taskId,
+      source: "STATUS_CHANGE"
+    });
+  }
+  // ---------------------------
 
-  // تحديث status ووقت الإنجاز وحساب الأموال
   task.status = "done";
   task.completedAt = new Date();
+  
+  // حساب الفلوس بناءً على الساعات الفعلية اللي اتحسبت
   task.earnedMoney = (task.spentHours || 0) * task.project.hourlyRate;
 
   await task.save();
