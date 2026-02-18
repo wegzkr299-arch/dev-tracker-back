@@ -5,16 +5,18 @@ const mongoose = require("mongoose");
 const { findTaskById } = require("../repositories/task.repository");
 const { autoCompleteQueue } = require("../../../utils/taskQueue");
 
-async function startTask({ developerId, projectId, taskId, durationMinutes, source = "MANUAL" }) {
-    if (!developerId || !projectId || !taskId || !durationMinutes) {
-        throw new ApiError(400, "Missing data: developerId, projectId, taskId, and durationMinutes are required");
+async function startTask({ developerId, projectId, taskId, source = "MANUAL" }) {
+    if (!developerId || !projectId || !taskId) {
+        throw new ApiError(400, "Missing data: developerId, projectId, or taskId");
     }
 
     const task = await findTaskById(taskId);
     if (!task) throw new ApiError(404, "Task not found");
     if (task.status === "done") throw new ApiError(400, "Task is already completed");
 
-    const delay = Number(durationMinutes) * 60 * 1000;
+    const hours = task.estimatedHours || 1;
+    const finalDurationMinutes = hours * 60;
+    const delay = finalDurationMinutes * 60 * 1000;
     
     await autoCompleteQueue.add(
         `auto-complete-${taskId}`,
@@ -26,10 +28,9 @@ async function startTask({ developerId, projectId, taskId, durationMinutes, sour
         }
     );
 
-    console.log(`[Queue] Auto-complete scheduled in ${durationMinutes}m`);
+    console.log(`[Queue] Auto-complete scheduled in ${hours}h (${finalDurationMinutes}m)`);
     return TaskActivityRepo.createStart({ developerId, projectId, taskId, source });
 }
-
 async function endTask({ developerId, projectId, taskId, source = "MANUAL" }) {
     if (!developerId || !projectId || !taskId)
         throw new ApiError(401, "Unauthorized: missing ids");
@@ -48,18 +49,11 @@ async function pauseTask({ developerId, projectId, taskId }) {
     return endTask({ developerId, projectId, taskId, source: "MANUAL" });
 }
 
-async function resumeTask({ developerId, projectId, taskId, durationMinutes }) {
-    let finalDuration = durationMinutes;
-    if (!finalDuration) {
-        const task = await findTaskById(taskId);
-        finalDuration = task.durationMinutes || 60;
-    }
-
+async function resumeTask({ developerId, projectId, taskId }) {
     return startTask({ 
         developerId, 
         projectId, 
         taskId, 
-        durationMinutes: finalDuration, 
         source: "MANUAL" 
     });
 }
