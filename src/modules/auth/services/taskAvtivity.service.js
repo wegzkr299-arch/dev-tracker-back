@@ -1,48 +1,69 @@
 const ApiError = require("../../../utils/apiErrors");
-const TaskActivity = require('../schemas/taskActivity.schema') 
-const TaskActivityRepo = require('../repositories/taskActivty.repository')
+const TaskActivity = require('../schemas/taskActivity.schema');
+const TaskActivityRepo = require('../repositories/taskActivty.repository');
 const mongoose = require("mongoose");
 const { findTaskById } = require("../repositories/task.repository");
 const { autoCompleteQueue } = require("../../../utils/taskQueue");
 
-async function startTask({ developerId, projectId, taskId, source = "MANUAL" }) {
-if (!developerId || !projectId || !taskId || !durationMinutes) {
-    throw new Error("Missing data: developerId, projectId, taskId, and durationMinutes are required");
-  }
-
-  const task = await findTaskById(taskId);
-  if (task.status === "done") throw new Error("Task is already completed");
-
-  const delay = durationMinutes * 60 * 1000;
-  await autoCompleteQueue.add(
-    `auto-complete-${taskId}`, 
-    { developerId, projectId, taskId },
-    { 
-      delay: delay,
-      removeOnComplete: true, 
-      jobId: taskId 
+async function startTask({ developerId, projectId, taskId, durationMinutes, source = "MANUAL" }) {
+    if (!developerId || !projectId || !taskId || !durationMinutes) {
+        throw new ApiError(400, "Missing data: developerId, projectId, taskId, and durationMinutes are required");
     }
-  );
 
-  console.log(`[Queue] Auto-complete scheduled in ${durationMinutes}m`);
+    const task = await findTaskById(taskId);
+    if (!task) throw new ApiError(404, "Task not found");
+    if (task.status === "done") throw new ApiError(400, "Task is already completed");
 
-  return TaskActivityRepo.createStart({ developerId, projectId, taskId, source });
+    const delay = Number(durationMinutes) * 60 * 1000;
+    
+    await autoCompleteQueue.add(
+        `auto-complete-${taskId}`,
+        { developerId, projectId, taskId },
+        {
+            delay: delay,
+            removeOnComplete: true,
+            jobId: taskId.toString()
+        }
+    );
+
+    console.log(`[Queue] Auto-complete scheduled in ${durationMinutes}m`);
+    return TaskActivityRepo.createStart({ developerId, projectId, taskId, source });
 }
 
 async function endTask({ developerId, projectId, taskId, source = "MANUAL" }) {
-  if (!developerId || !projectId || !taskId)
-    throw new ApiError(401, "Unauthorized: missing developer, project or task id");
+    if (!developerId || !projectId || !taskId)
+        throw new ApiError(401, "Unauthorized: missing ids");
 
-  return TaskActivityRepo.createEnd({ developerId, projectId, taskId, source });
+    try {
+        const job = await autoCompleteQueue.getJob(taskId.toString());
+        if (job) await job.remove();
+    } catch (err) {
+        console.error("Queue clean up error:", err.message);
+    }
+
+    return TaskActivityRepo.createEnd({ developerId, projectId, taskId, source });
 }
 
 async function pauseTask({ developerId, projectId, taskId }) {
-  return endTask({ developerId, projectId, taskId, source: "MANUAL" });
+    return endTask({ developerId, projectId, taskId, source: "MANUAL" });
 }
 
-async function resumeTask({ developerId, projectId, taskId }) {
-  return startTask({ developerId, projectId, taskId, source: "MANUAL" });
+async function resumeTask({ developerId, projectId, taskId, durationMinutes }) {
+    let finalDuration = durationMinutes;
+    if (!finalDuration) {
+        const task = await findTaskById(taskId);
+        finalDuration = task.durationMinutes || 60;
+    }
+
+    return startTask({ 
+        developerId, 
+        projectId, 
+        taskId, 
+        durationMinutes: finalDuration, 
+        source: "MANUAL" 
+    });
 }
+
 
 async function getTaskStatus({ developerId, taskId }) {
   const lastStart = await TaskActivityRepo.findLastStart({ developerId, taskId });
