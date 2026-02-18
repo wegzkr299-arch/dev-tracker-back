@@ -8,6 +8,7 @@ const errorMiddleware = require("./middlewares/error.middleware");
 const { projectRouter } = require("./modules/auth/routes/project.routes");
 const taskRouter = require("./modules/auth/routes/task.routes");
 const TaskActivity = require("./modules/auth/routes/taskActivity.routes");
+require('./utils/taskQueue');
 const app = express();
 const port = 4200;
 app.set('trust proxy', 1)
