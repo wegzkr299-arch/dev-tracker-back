@@ -6,7 +6,8 @@ const taskActivityService = require('./taskAvtivity.service')
 
 const createTaskService = async (developerId, projectId, data) => {
   if (!developerId || !projectId)
-    throw new ApiError(401, "Unauthorized: missing developer or project id"); 
+    throw new ApiError(401, "Unauthorized: missing developer or project id");
+    if(!data) throw new ApiError(401 , "Missing Fields")
   const project = await getOneActiveProjects(developerId, projectId);
   if (!project) throw new ApiError(404, "Project not found");
   const task = await creatTaske({ ...data, project: projectId});
@@ -22,15 +23,12 @@ const completeTaskService = async (developerId, projectId, taskId) => {
   if (!task || String(task.project._id) !== String(projectId) || String(task.project.owner) !== String(developerId))
     throw new ApiError(404, "Task not found or you are not allowed");
 
-  if (source === "USER") {
-    const { autoCompleteQueue } = require('../../../utils/taskQueue');
-    const job = await autoCompleteQueue.getJob(taskId);
-    if (job) await job.remove();
-  }
-
+  // --- التعديل الجوهري هنا ---
+  // نتحقق الأول: هل التاسك دي شغالة دلوقتي؟ 
   const status = await taskActivityService.getTaskStatus({ developerId, taskId });
   
   if (status.isWorking) {
+    // لو شغالة بس نقفلها
     await taskActivityService.endTask({
       developerId,
       projectId,
@@ -38,10 +36,12 @@ const completeTaskService = async (developerId, projectId, taskId) => {
       source: "STATUS_CHANGE"
     });
   }
+  // ---------------------------
 
   task.status = "done";
   task.completedAt = new Date();
   
+  // حساب الفلوس بناءً على الساعات الفعلية اللي اتحسبت
   task.earnedMoney = (task.spentHours || 0) * task.project.hourlyRate;
 
   await task.save();
