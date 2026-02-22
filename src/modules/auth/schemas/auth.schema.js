@@ -37,4 +37,8 @@ const createTaskSchema = joi.object({
   deadline: joi.date().greater("now")
 });
 
-module.exports = { registerSchema , loginSchema , createProjectSchema , updateProjectSchema  , createTaskSchema}; 
+const changUser = joi.object({
+  name:joi.string().min(3).max(30).required()
+})
+
+module.exports = { registerSchema , loginSchema , createProjectSchema , updateProjectSchema  , createTaskSchema , changUser}; 
