@@ -1,16 +1,18 @@
-const Redis = require("ioredis");
+const Redis = require("ioredis")
 
 const redis = new Redis({
-  host: process.env.REDIS_HOST || "127.0.0.1",
-  port: process.env.REDIS_PORT || 6379,
-});
+  host: "full-dane-41103.upstash.io",
+  port: 6379,
+  password: "AaCPAAIncDIyYTc3YWVkYjQ1YmQ0YmY4YTM0NThiYzMzZTNkMTQ4MHAyNDExMDM", // حط التوكن بتاعك هنا
+  tls: {} // مهم لأنه مفعل SSL/TLS
+})
 
 redis.on("connect", () => {
-  console.log("✅ Redis connected");
-});
+  console.log("✅ Redis connected")
+})
 
 redis.on("error", (err) => {
-  console.error("❌ Redis error:", err);
-});
+  console.error("❌ Redis error:", err)
+})
 
-module.exports = redis;
+module.exports = redis
