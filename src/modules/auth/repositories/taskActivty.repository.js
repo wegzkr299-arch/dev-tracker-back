@@ -52,13 +52,13 @@ async function findAllSessions({ developerId, taskId }) {
     }
   });
 
-  // لو آخر START بدون END
+
   if (currentStart) sessions.push({ start: currentStart.createdAt, end: null });
 
   return sessions;
 }
 
-// ❗ التصدير
+
 module.exports = {
   createStart,
   createEnd,

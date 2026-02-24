@@ -65,8 +65,7 @@ const otpToCreatAcc = async (otp, token) => {
     const isMatchedOtp = await compareOtp(otp, decoded.resetOTP);
     if (!isMatchedOtp) throw new ApiError(401, "Invalid OTP");
 
-    if (decoded.resetOTP < new Date())
-      throw new ApiError(400, "OTP expired");
+    if (decoded.resetOTP < new Date()) throw new ApiError(400, "OTP expired");
 
     const developer = await Developer.create({
       name: decoded.name,
@@ -94,4 +93,56 @@ const logindev = async (email, password) => {
   return { developer, token };
 };
 
-module.exports = { registerdev, logindev, otpToCreatAcc };
+const forgotPasswordDev = async (email) => {
+  if (!email) {
+    throw new ApiError(400, "Email is required");
+  }
+
+  const user = await findUserByEmail(email);
+  if (!user) {
+    return {
+      message: "If the email exists, an OTP was sent.",
+    };
+  }
+  const otp = generateOTP();
+  const hashedOtp = await hashOtp(otp);
+
+  const expiresInMin = Number(process.env.OTP_EXPIRES_MIN || 15);
+  const otpExpires = new Date(Date.now() + expiresInMin * 60 * 1000);
+
+  user.resetOTP = hashedOtp;
+  user.resetOTPExpires = otpExpires;
+  await user.save();
+
+  const html = `
+      <p>Hi ${user.name},</p>
+      <p>Your password reset code is:</p>
+      <h2>${otp}</h2>
+      <p>This code will expire in ${expiresInMin} minutes.</p>
+      <p>If you didn't request this, ignore this email.</p>
+    `;
+
+  await sendMail(user.email, "Password Reset Code", html);
+
+  return {
+    message: "If the email exists, an OTP was sent.",
+  };
+};
+
+const changeDeveloperPassword = async (email, otp, newPassword) => {
+  if (!email || !otp || !newPassword) throw new ApiError(400, "otp is requierd");
+  const user = await findUserByEmail(email);
+  if (!user) throw new ApiError(404, "User not Found");
+  const isValidOtp = await compareOtp(otp, user.resetOTP);
+  if (!isValidOtp) {
+    throw new ApiError(401, "Invalid OTP");
+  }
+  const salt = await bcrypt.genSalt(10);
+  user.password = await bcrypt.hash(newPassword, salt);
+  user.resetOTP = null;
+  user.resetOTPExpires = null;
+  await user.save();
+  return { message: "Password changed successfully" };
+};
+
+module.exports = { registerdev, logindev, otpToCreatAcc, forgotPasswordDev , changeDeveloperPassword };

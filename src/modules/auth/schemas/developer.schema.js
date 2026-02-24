@@ -1,9 +1,8 @@
 const mongoose = require("mongoose");
 
-
 const developerSchema = new mongoose.Schema(
   {
-    name: { type: String, required: [true, "name is required"] , minlength:3 },
+    name: { type: String, required: [true, "name is required"], minlength: 3 },
     email: {
       type: String,
       required: [true, "email is required"],
@@ -26,9 +25,17 @@ const developerSchema = new mongoose.Schema(
     },
     resetOTP: { type: String },
     resetOTPExpires: { type: Date },
+    resetOTPAttempts: {
+      type: Number,
+      default: 0,
+    },
+
+    resetOTPLastRequest: {
+      type: Date,
+    }
   },
 
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = mongoose.model("Developer", developerSchema);

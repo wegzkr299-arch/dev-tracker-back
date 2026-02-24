@@ -5,7 +5,6 @@ const registerSchema = joi.object({
   password: joi.string().min(8).required(),
 });
 
-
 const otpSchema = joi.object({
   otp: joi.number().required(),
   email: joi.string().email().required(),
@@ -34,11 +33,36 @@ const updateProjectSchema = joi.object({
 const createTaskSchema = joi.object({
   title: joi.string().min(3).max(255).required(),
   estimatedHours: joi.number().min(0).optional(),
-  deadline: joi.date().greater("now")
+  deadline: joi.date().greater("now"),
 });
 
 const changUser = joi.object({
-  name:joi.string().min(3).max(30).required()
-})
+  name: joi.string().min(3).max(30).required(),
+});
 
-module.exports = { registerSchema , loginSchema , createProjectSchema , updateProjectSchema  , createTaskSchema , changUser}; 
+const changPass = joi.object({
+  password: joi.string().min(8).required(),
+});
+
+const mailSchema = joi.object({
+  email: joi.string().email().required(),
+});
+
+const changePassSchema = joi.object({
+  email: joi.string().email().required(),
+  otp: joi.string().min(3).max(50).required(),
+
+  newPassword: joi.string().min(8).required(),
+});
+
+module.exports = {
+  registerSchema,
+  loginSchema,
+  createProjectSchema,
+  updateProjectSchema,
+  createTaskSchema,
+  changUser,
+  changPass,
+  changePassSchema,
+  mailSchema,
+};
