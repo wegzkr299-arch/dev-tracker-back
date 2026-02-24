@@ -137,8 +137,8 @@ const changeDeveloperPassword = async (email, otp, newPassword) => {
   if (!isValidOtp) {
     throw new ApiError(401, "Invalid OTP");
   }
-    const salt = await bcrypt.genSalt(10);
-  user.password = await bcrypt.hash(newPassword, salt);
+    const saltt = await bcrypt.genSalt(10);
+  user.password = await bcrypt.hash(newPassword, saltt);
   user.resetOTP = null;
   user.resetOTPExpires = null;
   await user.save();
