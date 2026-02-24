@@ -32,7 +32,7 @@ try {
 if (error) {
   return next(new ApiError(400, error.details[0].message));
 }
-  const {email} = req.body;
+  const email = req.body;
   const {message}  = await forgotPasswordDev(email);
   res.status(200).json({message})
 } catch (error) {
