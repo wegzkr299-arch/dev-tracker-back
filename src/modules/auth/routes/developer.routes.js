@@ -4,6 +4,6 @@ const { protect } = require('../../../middlewares/auth.middleware');
 const forgotPasswordLimiter = require('../../../middlewares/rateLimit.middleware');
 const developerRouter = express.Router();
 developerRouter.patch('/changeusername' , protect ,updateUserName)
-developerRouter.post('/forgotpassword' , forgotPasswordLimiter ,otpToChangePassword)
+developerRouter.post('/forgotpassword' ,otpToChangePassword)
 developerRouter.post('/changepassword' , changePassword)
 module.exports = {developerRouter};
