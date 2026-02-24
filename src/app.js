@@ -64,7 +64,7 @@ app.use('/auth', regRouter);
 app.use('/developer' , projectRouter);
 app.use('/project' , taskRouter)
 app.use('/activityproject' , TaskActivity)
-app.use('/developer' , developerRouter)
+app.use('/developerSettings' , developerRouter)
 app.use(errorMiddleware);
 
 
