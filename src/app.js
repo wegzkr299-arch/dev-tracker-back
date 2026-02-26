@@ -9,6 +9,7 @@ const { projectRouter } = require("./modules/auth/routes/project.routes");
 const taskRouter = require("./modules/auth/routes/task.routes");
 const TaskActivity = require("./modules/auth/routes/taskActivity.routes");
 const { developerRouter } = require("./modules/auth/routes/developer.routes");
+const { invitaionsRouter } = require("./modules/auth/routes/invitations.routes");
 require('./utils/taskQueue');
 const app = express();
 const port = 4200;
@@ -65,6 +66,7 @@ app.use('/developer' , projectRouter);
 app.use('/project' , taskRouter)
 app.use('/activityproject' , TaskActivity)
 app.use('/developerSettings' , developerRouter)
+app.use('/invitations' , invitaionsRouter)
 app.use(errorMiddleware);
 
 

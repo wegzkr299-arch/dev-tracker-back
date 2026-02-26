@@ -47,9 +47,10 @@ const getArchivedProjects = async (ownerId, page, limit) => {
     .skip(page * limit);
 };
 
-const findAllProjects = async (ownerId, page, limit) => {
+const findAllProjects = async (ownerIds, page, limit) => {
+  // ownerIds هنا بقت Array [id1, id2, ...]
   return await Project.find({
-    owner: ownerId,
+    owner: { $in: ownerIds }, // بيبحث عن أي مشروع صاحبه واحد من اللي في اللستة
     isArchived: false,
   })
     .sort({ createdAt: -1 })

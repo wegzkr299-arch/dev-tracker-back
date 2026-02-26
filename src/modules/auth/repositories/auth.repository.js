@@ -13,4 +13,8 @@ const createDev = async (name, email, password) => {
   return await Developer.create({ name, email, password });
    
 };
-module.exports = { isExists, createDev  , findUserByEmail}; 
+
+const findUserById = async (devId) => {
+  return Developer.findById(devId);
+}
+module.exports = { isExists, createDev  , findUserByEmail , findUserById}; 

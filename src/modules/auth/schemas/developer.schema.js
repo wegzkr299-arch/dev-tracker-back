@@ -30,10 +30,35 @@ const developerSchema = new mongoose.Schema(
       default: 0,
     },
 
+    // داخل الـ developerSchema في ملف developer.schema.js
+
+teams: [{
+  adminId: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: "Developer" 
+  },
+  joinedAt: { 
+    type: Date, 
+    default: Date.now 
+  },
+  // هنا بنحدد المطور ده يقدر يعمل إيه في فريق الأدمن ده
+  permissions: {
+    canCreateProjects: { type: Boolean, default: false },
+    canEditProjects: { type: Boolean, default: false },
+    canDeleteProjects: { type: Boolean, default: false },
+    canManageTasks: { type: Boolean, default: true }, // غالباً أي حد بينضم بيقدر يدير التاكات
+    canSeeFinancials: { type: Boolean, default: false } // هل يشوف الفلوس والـ Hourly Rate؟
+  }
+}],
+
     resetOTPLastRequest: {
       type: Date,
     }
+
+    
   },
+
+  
 
   { timestamps: true },
 );
