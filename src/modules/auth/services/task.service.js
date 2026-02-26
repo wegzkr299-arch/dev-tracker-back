@@ -1,6 +1,8 @@
 const ApiError = require("../../../utils/apiErrors");
+const { findUserById } = require("../repositories/auth.repository");
 const { getOneActiveProjects } = require("../repositories/project.repository");
 const { creatTaske, findTaskById, getProjectFinancials, findAllTasksByProjectId, deleteCompletedTasks } = require("../repositories/task.repository");
+const { developerRouter } = require("../routes/developer.routes");
 const projectSchema = require("../schemas/project.schema");
 const taskActivityService = require('./taskAvtivity.service')
 
@@ -67,7 +69,7 @@ const getAllTasks = async (projectId, developerId) => {
     const isOwner = project.owner.toString() === developerId.toString();
     
     // نجيب بيانات المطور عشان نشوف الفرق بتاعته
-    const developer = await AuthRepo.findUserById(developerId);
+    const developer = await findUserById(developerId);
     const isMember = developer.teams.some(t => t.adminId.toString() === project.owner.toString());
 
     if (!isOwner && !isMember) {
