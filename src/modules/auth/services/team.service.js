@@ -1,7 +1,6 @@
 const Developer = require("../repositories/auth.repository")
 const ApiError = require("../../../utils/apiErrors")
 const InvitationRepo = require("../repositories/invitations.repository");
-const developerSchema = require("../schemas/developer.schema");
 const sendInvite = async (adminId, recipientEmail) => {
     const emailLower = recipientEmail.toLowerCase().trim();
     if(!adminId || !emailLower){

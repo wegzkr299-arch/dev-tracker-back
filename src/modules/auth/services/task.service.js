@@ -52,22 +52,32 @@ const getProjectFinancialsService = async (projectId) => {
   return getProjectFinancials(projectId);
 };
 
-const getAllTasks = async (projectId , developerId) => {
+const getAllTasks = async (projectId, developerId) => {
     if (!developerId || !projectId)
-    throw new ApiError(401, "Unauthorized: missing developer or project id");
+        throw new ApiError(401, "Unauthorized: missing developer or project id");
 
-    const project = await projectSchema.findOne({ 
-        _id: projectId,   
-        owner: developerId 
-    });
+    // 1. نجيب المشروع الأول عشان نعرف مين صاحبه
+    const project = await projectSchema.findById(projectId);
 
     if (!project) {
+        throw new ApiError(404, "Project not found");
+    }
+
+    // 2. التحقق من الصلاحية: هل هو الصاحب؟ أو عضو في فريق الصاحب؟
+    const isOwner = project.owner.toString() === developerId.toString();
+    
+    // نجيب بيانات المطور عشان نشوف الفرق بتاعته
+    const developer = await AuthRepo.findUserById(developerId);
+    const isMember = developer.teams.some(t => t.adminId.toString() === project.owner.toString());
+
+    if (!isOwner && !isMember) {
         throw new ApiError(403, "You don't have permission to access tasks for this project");
     }
-    const tasks = await findAllTasksByProjectId(projectId);
-    return tasks
-}
 
+    // 3. لو عدى من الـ Check، هات التاكات عادي
+    const tasks = await findAllTasksByProjectId(projectId);
+    return tasks;
+}
 const deleteAllTasks = async(projectId  , developerId) => {
     if (!developerId || !projectId)
     throw new ApiError(401, "Unauthorized: missing developer or project id");
