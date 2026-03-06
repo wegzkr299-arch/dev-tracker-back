@@ -2,24 +2,30 @@ const Developer = require("../repositories/auth.repository")
 const ApiError = require("../../../utils/apiErrors")
 const InvitationRepo = require("../repositories/invitations.repository");
 const sendInvite = async (adminId, recipientEmail) => {
-    const emailLower = recipientEmail.toLowerCase().trim();
-    if(!adminId || !emailLower){
-        throw new ApiError(400 , "admin and developer email are requierd")
-    }
-    const admin  = await Developer.findUserById(adminId);
-    if(admin.email === emailLower){
-        throw new ApiError(400 , "you cannot send invitation to yourself")
-    }
-    const recipient = await Developer.findUserByEmail(emailLower);
-    if(!recipient){
-        throw new ApiError(404 , "cannot find user by this email")
-    }
+  const emailLower = recipientEmail.toLowerCase().trim();
 
-    const isAlreadyMember = recipient.teams.some(
+  // 1. Validation
+  if (!adminId || !emailLower) {
+    throw new ApiError(400, "Admin ID and developer email are required");
+  }
+
+  const admin = await Developer.findUserById(adminId);
+  if (admin.email === emailLower) {
+    throw new ApiError(400, "You cannot send an invitation to yourself");
+  }
+
+  // 2. التحقق من وجود المستخدم المستقبل
+  const recipient = await Developer.findUserByEmail(emailLower);
+  if (!recipient) {
+    throw new ApiError(404, "Cannot find user with this email");
+  }
+
+  // 3. التحقق هل هو عضو فعلاً؟
+  const isAlreadyMember = recipient.teams.some(
     (t) => t.adminId.toString() === adminId.toString()
   );
   if (isAlreadyMember) {
-    throw new ApiError(400, "this developer already in your team");
+    throw new ApiError(400, "This developer is already in your team");
   }
 
   const existingInvite = await InvitationRepo.findPendingInvite(adminId, emailLower);
@@ -27,19 +33,28 @@ const sendInvite = async (adminId, recipientEmail) => {
     throw new ApiError(400, "An invitation is already pending for this developer");
   }
 
-  return await InvitationRepo.createInvitation(adminId, emailLower);
+  const invitation = await InvitationRepo.createInvitation(adminId, emailLower);
 
 
+  if (global.io) {
+    global.io.to(recipient._id.toString()).emit("new_invitation", {
+      message: `You have been invited to join ${admin.name}'s team`,
+      invitationId: invitation._id,
+      senderName: admin.name,
+      sentAt: invitation.createdAt
+    });
+  }
 
-}
-
+  return invitation;
+};
 
 
 const respondToInvite = async (userId, invitationId, decision) => {
-  // 1. البحث عن الدعوة
-  if(!decision || !invitationId){
-    throw new ApiError(400 , "decision or task are not defined")
+  if (!decision || !invitationId) {
+    throw new ApiError(400, "Decision and Invitation ID are required");
   }
+
+  // 1. البحث عن الدعوة
   const invitation = await InvitationRepo.findInviteById(invitationId);
   if (!invitation || invitation.status !== "pending") {
     throw new ApiError(400, "This invitation is no longer valid or has already been processed.");
@@ -52,31 +67,50 @@ const respondToInvite = async (userId, invitationId, decision) => {
   }
 
   if (decision === "accept") {
-    // 3. إضافة المطور لفريق الأدمن (مع الصلاحيات الافتراضية)
+    // 3. إضافة المطور لفريق الأدمن (بناءً على خطتك: صلاحيات لإدارة المشاريع)
     const alreadyInTeam = user.teams.some(t => t.adminId.toString() === invitation.sender.toString());
     
     if (!alreadyInTeam) {
       user.teams.push({ 
         adminId: invitation.sender,
-        permissions: { canManageTasks: true } // صلاحية افتراضية
+        permissions: { 
+          canCreateProjects: true, // حسب رغبتك في السماح للمطورين بإضافة مشاريع
+          canManageTasks: true 
+        } 
       });
       await user.save();
     }
 
-    // 4. تحديث حالة الدعوة لـ Accepted
     await InvitationRepo.updateInvitationStatus(invitationId, "accepted");
+
+    // --- ⚡ إشعار للأدمن إن الدعوة اتقبلت ⚡ ---
+    if (global.io) {
+      global.io.to(invitation.sender.toString()).emit("invitation_accepted", {
+        developerName: user.name,
+        developerId: user._id,
+        message: `${user.name} has joined your team!`
+      });
+    }
+
     return { message: "Invitation accepted. You are now part of the team!" };
   } 
   
   else if (decision === "reject") {
-    // 5. تحديث حالة الدعوة لـ Rejected
     await InvitationRepo.updateInvitationStatus(invitationId, "rejected");
+
+    // --- ⚡ إشعار للأدمن بالرفض ⚡ ---
+    if (global.io) {
+      global.io.to(invitation.sender.toString()).emit("invitation_rejected", {
+        developerEmail: user.email,
+        message: `${user.name} declined your invitation.`
+      });
+    }
+
     return { message: "Invitation rejected." };
   }
 
   throw new ApiError(400, "Invalid decision. Must be 'accept' or 'reject'.");
 };
-
 
 const getTeamMembers = async (adminId) => {
   // 1. التأكد من وجود الأدمن (خطوة اختيارية لزيادة الأمان)
