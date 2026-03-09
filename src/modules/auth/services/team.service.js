@@ -73,10 +73,7 @@ const respondToInvite = async (userId, invitationId, decision) => {
     if (!alreadyInTeam) {
       user.teams.push({ 
         adminId: invitation.sender,
-        permissions: { 
-          canCreateProjects: true, // حسب رغبتك في السماح للمطورين بإضافة مشاريع
-          canManageTasks: true 
-        } 
+
       });
       await user.save();
     }
