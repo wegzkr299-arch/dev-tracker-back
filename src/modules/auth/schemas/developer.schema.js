@@ -46,7 +46,7 @@ teams: [{
     canCreateProjects: { type: Boolean, default: false },
     canEditProjects: { type: Boolean, default: false },
     canDeleteProjects: { type: Boolean, default: false },
-    canManageTasks: { type: Boolean, default: true }, // غالباً أي حد بينضم بيقدر يدير التاكات
+    canManageTasks: { type: Boolean, default: false }, // غالباً أي حد بينضم بيقدر يدير التاكات
     canSeeFinancials: { type: Boolean, default: false } // هل يشوف الفلوس والـ Hourly Rate؟
   }
 }],
