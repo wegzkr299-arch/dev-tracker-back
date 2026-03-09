@@ -9,28 +9,50 @@ const taskActivityService = require('./taskAvtivity.service')
 const createTaskService = async (developerId, projectId, data) => {
   if (!developerId || !projectId)
     throw new ApiError(401, "Unauthorized: missing developer or project id");
-    if(!data) throw new ApiError(401 , "Missing Fields")
-  const project = await getOneActiveProjects(developerId, projectId);
+
+  // 1. نجيب المشروع
+  const project = await projectSchema.findById(projectId);
   if (!project) throw new ApiError(404, "Project not found");
-  const task = await creatTaske({ ...data, project: projectId});
+
+  // 2. التحقق من الصلاحية
+  const isOwner = project.owner.toString() === developerId.toString();
+  
+  const user = await findUserById(developerId);
+  // بندور هل المطور ده عضو في تيم صاحب المشروع؟
+  const teamContext = user.teams.find(t => t.adminId.toString() === project.owner.toString());
+
+  // لو مش صاحب المشروع ومش عضو في التيم ومعاه صلاحية إدارة التاكات.. ارفض
+  if (!isOwner && (!teamContext || !teamContext.permissions.canManageTasks)) {
+    throw new ApiError(403, "You don't have permission to add tasks to this project");
+  }
+
+  // 3. إنشاء التاسك
+  const task = await creatTaske({ ...data, project: projectId });
   return task;
 };
 
 
 const completeTaskService = async (developerId, projectId, taskId) => {
-  if (!developerId || !projectId || !taskId) 
-    throw new ApiError(401, "Unauthorized: missing developer, project or task id");
-
   const task = await findTaskById(taskId);
-  if (!task || String(task.project._id) !== String(projectId) || String(task.project.owner) !== String(developerId))
-    throw new ApiError(404, "Task not found or you are not allowed");
+  if (!task) throw new ApiError(404, "Task not found");
 
-  // --- التعديل الجوهري هنا ---
-  // نتحقق الأول: هل التاسك دي شغالة دلوقتي؟ 
+  // التأكد إن التاسك تابعة للمشروع ده أصلاً
+  if (String(task.project._id) !== String(projectId)) {
+    throw new ApiError(400, "Task does not belong to this project");
+  }
+
+  // التحقق من الصلاحية
+  const isOwner = task.project.owner.toString() === developerId.toString();
+  const user = await findUserById(developerId);
+  const teamContext = user.teams.find(t => t.adminId.toString() === task.project.owner.toString());
+
+  if (!isOwner && (!teamContext || !teamContext.permissions.canManageTasks)) {
+    throw new ApiError(403, "Access denied: You cannot modify tasks in this team");
+  }
+
+  // الـ Logic بتاع الـ Activity اللي إنت عامله (جميل جداً)
   const status = await taskActivityService.getTaskStatus({ developerId, taskId });
-  
   if (status.isWorking) {
-    // لو شغالة بس نقفلها
     await taskActivityService.endTask({
       developerId,
       projectId,
@@ -38,13 +60,15 @@ const completeTaskService = async (developerId, projectId, taskId) => {
       source: "STATUS_CHANGE"
     });
   }
-  // ---------------------------
 
   task.status = "done";
   task.completedAt = new Date();
   
-  // حساب الفلوس بناءً على الساعات الفعلية اللي اتحسبت
-  task.earnedMoney = (task.spentHours || 0) * task.project.hourlyRate;
+  // ملاحظة: لو المطور مش هو الأونر، هل مسموح له يشوف الـ hourlyRate؟ 
+  // إنت عامل في الـ Schema صلاحية canSeeFinancials، ممكن تستخدمها هنا
+  if (isOwner || (teamContext && teamContext.permissions.canSeeFinancials)) {
+     task.earnedMoney = (task.spentHours || 0) * task.project.hourlyRate;
+  }
 
   await task.save();
   return task;
